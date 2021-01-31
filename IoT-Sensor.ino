@@ -1,5 +1,6 @@
 #include <RFM69.h>
 #include <SPI.h>
+#include <ArduinoLowPower.h>
 // #include <string>
 
 #include "pinDefs.h"
@@ -10,6 +11,10 @@ char buff[61]; //61 max payload for radio
 
 // Init Radio Object
 RFM69 radio;
+Payload payload;
+bool newPayload = false;
+
+int i = 0;
 
 void setup()
 {
@@ -31,29 +36,28 @@ void setup()
 		radio.encrypt(ENCRYPTKEY);
 
 	// Pins
-	pinMode(BUTTON_UP, OUTPUT);
-	pinMode(BUTTON_DOWN, OUTPUT);
+	pinMode(BUTTON_UP, INPUT);
+	pinMode(BUTTON_DOWN, INPUT);
+	pinMode(TEMP_SNSR, INPUT);
 
-	attachInterrupt(digitalPinToInterrupt(BUTTON_UP), UP_ISR, RISING);
-	attachInterrupt(digitalPinToInterrupt(BUTTON_DOWN), DOWN_ISR, RISING);
+	LowPower.attachInterruptWakeup(BUTTON_UP, UP_ISR, RISING);
+	LowPower.attachInterruptWakeup(BUTTON_DOWN, DOWN_ISR, RISING);
+	LowPower.attachInterruptWakeup(RTC_ALARM_WAKEUP, TEMP_ISR, CHANGE);
+
+	payload.zoneID = ZONE_ID;
 }
-
-int i = 0;
-int temp = 0;
-bool newData = false;
 
 void loop()
 {
-	if (newData)
+	if (newPayload)
 	{
-		DEBUGln(i);
+		DEBUGln(payload.type);
+		DEBUGln(payload.data);
 
-		String sendbuffer = String(i);
-
-		if (radio.sendWithRetry(HUBID, sendbuffer.c_str(), sendbuffer.length(), RETRY_COUNT, RETRY_WAIT))
+		if (radio.sendWithRetry(HUBID, (const void *)(&payload), sizeof(payload), RETRY_COUNT, RETRY_WAIT))
 		{
-			newData = false;
 			Serial.println("ACK received!");
+			newPayload = false;
 		}
 	}
 
@@ -66,18 +70,48 @@ void loop()
 		}
 	}
 
-	// change to sleep
 	//radio.sleep();
+	// If the payload failed then wait a shorter random time
+	if (newPayload)
+		LowPower.sleep(random(50, 100)); // give a random amount of time ALOHA-net style
+	else
+		LowPower.sleep(TEMP_POLL_MS);
 }
 
 void UP_ISR()
 {
-	newData = true;
 	i++;
+	//i = min(99, i);
+
+	// Fill payload
+	payload.type = target_temp;
+	payload.data = i;
+	newPayload = true;
 }
 
 void DOWN_ISR()
 {
-	newData = true;
 	i--;
+	//i = max(66, i);
+
+	// Fill payload
+	payload.type = target_temp;
+	payload.data = i;
+	newPayload = true;
+}
+
+void TEMP_ISR()
+{
+	int rawData = analogRead(TEMP_SNSR);
+
+	// Fill payload
+	payload.type = curr_temp;
+	payload.data = rawToDeg(rawData);
+	newPayload = true;
+}
+
+// Temporary mapping check documentation
+int rawToDeg(int rawData)
+{
+	map(rawData, 0, 1024, 32, 125);
 }
