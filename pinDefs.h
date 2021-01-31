@@ -3,7 +3,9 @@
 
 // Analog
 #define TEMP_SNSR A2
+#define TEMP_MARGIN 200
+#define TEMP_POLL_MS 2000
 
 // Buttons
-#define BUTTON_UP A5
-#define BUTTON_DOWN A7
+#define BUTTON_UP digitalPinToInterrupt(A5)
+#define BUTTON_DOWN digitalPinToInterrupt(A7)

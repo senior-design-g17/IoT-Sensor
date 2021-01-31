@@ -9,6 +9,8 @@
 #define RETRY_COUNT	5
 #define RETRY_WAIT	10
 
+#define ZONE_ID 1
+
 // Command Types
 enum command : uint8_t
 {
