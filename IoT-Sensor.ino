@@ -59,8 +59,11 @@ void loop()
 
 	if (radio.receiveDone())
 	{
-		radio.sendACK();
-		DEBUGln("ACK sent");
+		if (radio.ACKRequested())
+		{
+			radio.sendACK();
+			DEBUGln("ACK sent");
+		}
 	}
 
 	// change to sleep
