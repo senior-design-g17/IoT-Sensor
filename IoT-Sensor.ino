@@ -45,7 +45,7 @@ bool newData = false;
 void loop()
 {
 	if (newData)
-	{	
+	{
 		DEBUGln(i);
 
 		String sendbuffer = String(i);
@@ -55,6 +55,12 @@ void loop()
 			newData = false;
 			Serial.println("ACK received!");
 		}
+	}
+
+	if (radio.receiveDone())
+	{
+		radio.sendACK();
+		DEBUGln("ACK sent");
 	}
 
 	// change to sleep
