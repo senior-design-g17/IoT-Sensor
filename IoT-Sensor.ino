@@ -14,7 +14,7 @@ RFM69 radio;
 Payload payload;
 bool newPayload = false;
 
-int i = 0;
+int target = 72;
 
 void setup()
 {
@@ -73,30 +73,30 @@ void loop()
 	//radio.sleep();
 	// If the payload failed then wait a shorter random time
 	if (newPayload)
-		LowPower.sleep(random(50, 100)); // give a random amount of time ALOHA-net style
+		LowPower.sleep((int)random(50, 100)); // give a random amount of time ALOHA-net style
 	else
-		LowPower.sleep(TEMP_POLL_MS);
+		LowPower.sleep((int)TEMP_POLL_MS);
 }
 
 void UP_ISR()
 {
-	i++;
-	//i = min(99, i);
+	target++;
+	target = min(99, target);
 
 	// Fill payload
 	payload.type = target_temp;
-	payload.data = i;
+	payload.data = target;
 	newPayload = true;
 }
 
 void DOWN_ISR()
 {
-	i--;
-	//i = max(66, i);
+	target--;
+	target = max(62, target);
 
 	// Fill payload
 	payload.type = target_temp;
-	payload.data = i;
+	payload.data = target;
 	newPayload = true;
 }
 
