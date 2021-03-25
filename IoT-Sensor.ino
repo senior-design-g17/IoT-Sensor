@@ -15,6 +15,7 @@ Payload payload;
 bool newPayload = false;
 
 int target = 72;
+int lastTemp = 0;
 
 void setup()
 {
@@ -56,7 +57,7 @@ void loop()
 
 		if (radio.sendWithRetry(HUBID, (const void *)(&payload), sizeof(payload), RETRY_COUNT, RETRY_WAIT))
 		{
-			Serial.println("ACK received!");
+			DEBUGln("ACK received!");
 			newPayload = false;
 		}
 	}
@@ -107,11 +108,26 @@ void TEMP_ISR()
 	// Fill payload
 	payload.type = curr_temp;
 	payload.data = rawToDeg(rawData);
-	newPayload = true;
+
+	if (lastTemp != payload.data)
+	{
+		newPayload = true;
+		lastTemp = payload.data;
+	}
 }
 
 // Temporary mapping check documentation
 int rawToDeg(int rawData)
 {
-	map(rawData, 0, 1024, 32, 125);
+	// linear slope between 0 C -> 500mV to 100 C -> 1500mV (10 mv/C + 500 mv)
+	// 500 mv = 155.15 adc
+	// 10 mv/C = 3.103 adc / C
+
+	// returning as fahrenheit
+	return CtF((rawData - 160.15) / 3.103);
+}
+
+int CtF(float C)
+{
+	return C * 1.8 + 32;
 }
