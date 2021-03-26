@@ -46,6 +46,8 @@ void setup()
 	LowPower.attachInterruptWakeup(RTC_ALARM_WAKEUP, TEMP_ISR, CHANGE);
 
 	payload.zoneID = ZONE_ID;
+
+	TEMP_ISR();
 }
 
 void loop()
@@ -64,11 +66,7 @@ void loop()
 
 	if (radio.receiveDone())
 	{
-		if (radio.ACKRequested())
-		{
-			radio.sendACK();
-			DEBUGln("ACK sent");
-		}
+		getLoad();
 	}
 
 	//radio.sleep();
@@ -77,6 +75,26 @@ void loop()
 		LowPower.sleep((int)random(50, 100)); // give a random amount of time ALOHA-net style
 	else
 		LowPower.sleep((int)TEMP_POLL_MS);
+}
+
+Payload getLoad()
+{
+	Payload load;
+
+	if (radio.DATALEN == sizeof(Payload))
+		load = *(Payload *)radio.DATA;
+
+	if (radio.ACKRequested())
+	{
+		radio.sendACK();
+		DEBUGln("ACK sent");
+	}
+
+	DEBUGln(load.zoneID);
+	DEBUGln(load.type);
+	DEBUGln(load.data);
+
+	return load;
 }
 
 void UP_ISR()
@@ -131,3 +149,6 @@ int CtF(float C)
 {
 	return C * 1.8 + 32;
 }
+
+// todo make an askForState function
+// handle a set temp target funcion
