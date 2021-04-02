@@ -14,7 +14,7 @@ RFM69 radio;
 Payload payload;
 bool newPayload = false;
 
-int target = 72;
+int target = 77;
 int lastTemp = 0;
 
 void setup()
