@@ -142,7 +142,7 @@ int rawToDeg(int rawData)
 	// 10 mv/C = 3.103 adc / C
 
 	// returning as fahrenheit
-	return CtF((rawData - 160.15) / 3.103);
+	return CtF((rawData - TEMP_INTERCEPT) / TEMP_SLOPE);
 }
 
 int CtF(float C)
